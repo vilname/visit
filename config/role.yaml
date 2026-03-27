@@ -1,0 +1,8 @@
+access_control:
+  - path: ^/admin
+    roles:
+      - role_admin
+      - role_superuser
+  - path: ^/api
+    roles:
+      - role_user

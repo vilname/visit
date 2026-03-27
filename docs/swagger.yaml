@@ -1,0 +1,29 @@
+definitions:
+  helper.ErrorResponse:
+    properties:
+      errorMessage:
+        type: string
+      message:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /admin/doctor:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "500":
+          description: Другие ошибки
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      - OAuth2Implicit: []
+      summary: Список промокодов
+      tags:
+      - Доктор
+swagger: "2.0"
