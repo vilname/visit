@@ -1,8 +1,10 @@
+// Package model для запуска миграций
 package main
 
 import (
-	"crm_api/config"
 	"fmt"
+	"visit/config"
+
 	"github.com/joho/godotenv"
 )
 

@@ -1,9 +1,9 @@
+// Package middleware мидалваре
 package middleware
 
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,19 +15,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// AccessRule правила всех ролей
 type AccessRule struct {
 	Path  string   `yaml:"path"`
 	Roles []string `yaml:"roles"`
 }
 
+// FileRole содержимое файла с ролями
 type FileRole struct {
 	AccessControl []AccessRule `yaml:"access_control"`
 }
 
-type TokenRole struct {
-	Roles map[string]string `json:"roles"`
-}
-
+// JWTClaims данные пользователя которые нужно получить из токена
 type JWTClaims struct {
 	Sub         string `json:"sub"`
 	RealmAccess struct {
@@ -35,6 +34,7 @@ type JWTClaims struct {
 	} `json:"realm_access"`
 }
 
+// AuthenticationMiddleware получение id пользователя из токена и проверка роли
 func AuthenticationMiddleware(c *gin.Context) {
 	request := c.Request
 	urlPath := request.URL.Path
@@ -67,9 +67,9 @@ func AuthenticationMiddleware(c *gin.Context) {
 		return
 	}
 
-	userUuid := tokenClaims.Sub
+	userUUID := tokenClaims.Sub
 
-	c.Set("userUuid", userUuid)
+	c.Set("userUuid", userUUID)
 
 	c.Next()
 }
@@ -80,23 +80,23 @@ func tokenClaim(jwtString string) (JWTClaims, error) {
 
 	parts := strings.Split(jwtString, ".")
 	if len(parts) != 3 {
-		return claims, errors.New("Неверный формат JWT")
+		return claims, fmt.Errorf("неверный формат JWT")
 	}
 
 	// Декодируем payload
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return claims, errors.New(fmt.Sprintf("Ошибка: %v\n", err))
+		return claims, fmt.Errorf("ошибка: %v", err)
 	}
 
 	err = json.Unmarshal(payload, &claims)
 	if err != nil {
-		return claims, errors.New(fmt.Sprintf("Ошибка: %v\n", err))
+		return claims, fmt.Errorf("ошибка: %v", err)
 	}
 	return claims, nil
 }
 
-func checkPermission(tokenRoles []string, requestUrl string) (bool, error) {
+func checkPermission(tokenRoles []string, requestURL string) (bool, error) {
 
 	var err error
 	isAccess := false
@@ -110,16 +110,19 @@ func checkPermission(tokenRoles []string, requestUrl string) (bool, error) {
 
 	data, err := os.ReadFile("config/role.yaml")
 	if err != nil {
-		return isAccess, errors.New("неверный путь до файла с ролями")
+		return isAccess, fmt.Errorf("неверный путь до файла с ролями")
 	}
 
 	var role FileRole
 	err = yaml.Unmarshal(data, &role)
+	if err != nil {
+		return isAccess, fmt.Errorf("неверный формат данных в файле")
+	}
 
 	rolesPath := ""
 	for _, rule := range role.AccessControl {
-		regexStr := fmt.Sprintf("%s", rule.Path)
-		matched, _ := regexp.MatchString(regexStr, requestUrl)
+		regexStr := rule.Path
+		matched, _ := regexp.MatchString(regexStr, requestURL)
 
 		if matched {
 			rolesPath = strings.Join(rule.Roles, ",")

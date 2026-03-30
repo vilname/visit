@@ -1,4 +1,5 @@
-package restAdmin
+// Package restadmin контроллер для админской части докторов
+package restadmin
 
 import (
 	"net/http"

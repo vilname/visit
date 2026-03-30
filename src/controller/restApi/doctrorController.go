@@ -1,4 +1,5 @@
-package restApi
+// Package restapi контроллеры публичной части
+package restapi
 
 import (
 	"net/http"

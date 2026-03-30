@@ -1,17 +1,20 @@
+// Package helper маленькие методы которые могут применяться по всему проекту
 package helper
 
 import (
-	"moneyKeeper/src/util/constant"
 	"net/http"
+	"visit/src/util/constant"
 
 	"github.com/gin-gonic/gin"
 )
 
+// ErrorResponse структура ответа об ошибке
 type ErrorResponse struct {
 	Message      string `json:"message"`
 	ErrorMessage string `json:"errorMessage"`
 }
 
+// ErrorResponseMethod обработка ошибки
 func ErrorResponseMethod(ctx *gin.Context, err error) {
 	errorResponse := ErrorResponse{}
 	errorResponse.Message = findErrorType(err)

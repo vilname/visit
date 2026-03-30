@@ -1,7 +1,7 @@
+// Package main сервис для обработки визитов в медицинских организациях
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"visit/config"
@@ -10,10 +10,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Package main
 func main() {
 	fmt.Println("Start App v0.01")
 
 	err := godotenv.Load()
+	if err != nil {
+		return
+	}
 
 	storage.InitDB()
 	router := config.InitRoute()
@@ -23,10 +27,10 @@ func main() {
 		db.Close()
 	}()
 
-	defer func(ctx context.Context) {
+	defer func() {
 		db := storage.GetDB()
 		db.Close()
-	}(context.Background())
+	}()
 
 	fmt.Println("init")
 

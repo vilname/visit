@@ -1,3 +1,4 @@
+// Package config конфиг
 package config
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 )
 
+// InitMigrationDB создание подключение к базе для миграции
 func InitMigrationDB() {
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
@@ -17,13 +19,17 @@ func InitMigrationDB() {
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 
-	dbSql, err := sql.Open(
+	dbSQL, err := sql.Open(
 		"postgres",
 		fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 			dbHost, dbUser, dbPass, dbName, dbPort),
 	)
 
-	driver, _ := postgres.WithInstance(dbSql, &postgres.Config{})
+	if err != nil {
+		return
+	}
+
+	driver, _ := postgres.WithInstance(dbSQL, &postgres.Config{})
 	m, _ := migrate.NewWithDatabaseInstance(
 		"file://migration",
 		"postgres", driver)
@@ -32,5 +38,8 @@ func InitMigrationDB() {
 		_ = fmt.Errorf("error when migration up: %v", err)
 	}
 
-	dbSql.Close()
+	err = dbSQL.Close()
+	if err != nil {
+		return
+	}
 }

@@ -1,3 +1,4 @@
+// Package middleware cors
 package middleware
 
 import (
@@ -6,8 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Middleware для обработки CORS
-
+// EnableCORS Middleware для обработки CORS
 func EnableCORS(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 

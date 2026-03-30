@@ -1,3 +1,4 @@
+// Package storage подключение к базе данных
 package storage
 
 import (
@@ -10,6 +11,7 @@ import (
 
 var db *pgxpool.Pool
 
+// InitDB Инициализируем подключение к базе данных
 func InitDB() {
 
 	var err error
@@ -21,6 +23,7 @@ func InitDB() {
 	}
 }
 
+// GetDB отдает пул подключений с базой
 func GetDB() *pgxpool.Pool {
 	return db
 }

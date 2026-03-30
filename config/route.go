@@ -2,8 +2,8 @@ package config
 
 import (
 	"visit/docs"
-	"visit/src/controller/restAdmin"
-	"visit/src/controller/restApi"
+	restadmin "visit/src/controller/restAdmin"
+	restapi "visit/src/controller/restApi"
 	"visit/src/util/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -11,16 +11,17 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+// InitRoute роутинг
 func InitRoute() *gin.Engine {
 	router := gin.New()
 	//router.Use(middleware.EnableCORS)
 	router.Use(middleware.AuthenticationMiddleware)
 
 	admin := router.Group(`/admin`)
-	admin.GET("/doctor", restAdmin.Doctor)
+	admin.GET("/doctor", restadmin.Doctor)
 
 	api := router.Group(`/api`)
-	api.GET("/doctor", restApi.Doctor)
+	api.GET("/doctor", restapi.Doctor)
 
 	docs.SwaggerInfo.BasePath = ""
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
