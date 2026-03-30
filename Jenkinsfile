@@ -6,7 +6,10 @@ pipeline {
     stages {
         stage("Cleanup") {
             steps {
-                sh "make docker-down-clear || true"
+                script {
+                    // Очищаем перед началом работы
+                    sh "make docker-down-clear || true"
+                }
             }
         }
         stage("Init") {
