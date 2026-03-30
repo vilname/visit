@@ -7,6 +7,7 @@ pipeline {
         stage("Cleanup") {
             steps {
                 sh "docker rm -f postgres_db"
+                sh "docker rm -f go_app"
             }
         }
         stage("Init") {
