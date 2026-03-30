@@ -6,10 +6,7 @@ pipeline {
     stages {
         stage("Cleanup") {
             steps {
-                script {
-                    // Очищаем перед началом работы
-                    sh "make docker-down-clear || true"
-                }
+                sh "docker rm -f postgres_db"
             }
         }
         stage("Init") {
