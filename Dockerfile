@@ -3,7 +3,8 @@ FROM golang:1.24-alpine AS development
 WORKDIR /app
 
 # Устанавливаем delve и air
-RUN go install github.com/go-delve/delve/cmd/dlv@v1.26 && \
+RUN apk add --no-cache make && \
+    go install github.com/go-delve/delve/cmd/dlv@v1.26 && \
     go install github.com/cosmtrek/air@v1.61.2 && \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 
