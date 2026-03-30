@@ -4,14 +4,14 @@ pipeline {
         timestamps()
     }
     stages {
+        stage("Cleanup") {
+            steps {
+                sh "make docker-down-clear || true"
+            }
+        }
         stage("Init") {
             steps {
                 sh "make init"
-            }
-        }
-        stage("Down") {
-            steps {
-                sh "make docker-down-clear"
             }
         }
     }
