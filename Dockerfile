@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Устанавливаем delve и air
 RUN go install github.com/go-delve/delve/cmd/dlv@v1.26 && \
-    go install github.com/cosmtrek/air@v1.61.2
+    go install github.com/cosmtrek/air@v1.61.2 && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 
 # Копируем go.mod и go.sum для кэширования зависимостей
 COPY go.mod go.sum ./
