@@ -6,6 +6,116 @@ definitions:
       message:
         type: string
     type: object
+  model.AppointmentCreateRequest:
+    properties:
+      comment:
+        type: string
+      dateTime:
+        type: string
+      doctorId:
+        type: string
+    required:
+    - dateTime
+    - doctorId
+    type: object
+  model.AppointmentResponse:
+    properties:
+      comment:
+        type: string
+      createdAt:
+        type: string
+      dateTime:
+        type: string
+      doctor:
+        $ref: '#/definitions/model.DoctorResponse'
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  model.DoctorListResponse:
+    properties:
+      doctors:
+        items:
+          $ref: '#/definitions/model.DoctorResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  model.DoctorResponse:
+    properties:
+      description:
+        type: string
+      experience:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      specialization:
+        type: string
+    type: object
+  model.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  model.UserLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.UserProfileResponse:
+    properties:
+      birthDate:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+    type: object
+  model.UserRegisterRequest:
+    properties:
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - email
+    - firstName
+    - lastName
+    - password
+    - phone
+    type: object
+  model.UserUpdateRequest:
+    properties:
+      birthDate:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -26,4 +136,289 @@ paths:
       summary: Список промокодов
       tags:
       - Доктор
+  /api/doctors:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка всех врачей медицинской организации. Можно фильтровать
+        по специализации
+      parameters:
+      - description: Фильтр по специализации
+        in: query
+        name: specialization
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список врачей
+          schema:
+            $ref: '#/definitions/model.DoctorListResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      summary: Список врачей
+      tags:
+      - Врачи
+  /api/doctors/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Получение подробной информации о враче по его идентификатору
+      parameters:
+      - description: ID врача
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Информация о враче
+          schema:
+            $ref: '#/definitions/model.DoctorResponse'
+        "404":
+          description: Врач не найден
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      summary: Получение врача по ID
+      tags:
+      - Врачи
+  /api/user/appointments:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка всех записей на приём текущего пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список записей
+          schema:
+            items:
+              $ref: '#/definitions/model.AppointmentResponse'
+            type: array
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Список записей пользователя
+      tags:
+      - Запись на приём
+    post:
+      consumes:
+      - application/json
+      description: Создание новой записи на приём к выбранному врачу
+      parameters:
+      - description: Данные для записи
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.AppointmentCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданная запись
+          schema:
+            $ref: '#/definitions/model.AppointmentResponse'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Создание записи на приём к врачу
+      tags:
+      - Запись на приём
+  /api/user/appointments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Отмена записи на приём по её идентификатору
+      parameters:
+      - description: ID записи
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись отменена
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Ошибка при отмене
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Отмена записи на приём
+      tags:
+      - Запись на приём
+  /api/user/login:
+    post:
+      consumes:
+      - application/json
+      description: Авторизация пользователя по email и паролю
+      parameters:
+      - description: Данные для авторизации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен авторизации
+          schema:
+            $ref: '#/definitions/model.TokenResponse'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "401":
+          description: Неверные учётные данные
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      summary: Авторизация пользователя
+      tags:
+      - Пользователь
+  /api/user/profile:
+    get:
+      consumes:
+      - application/json
+      description: Получение данных профиля текущего авторизованного пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль пользователя
+          schema:
+            $ref: '#/definitions/model.UserProfileResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Получение профиля пользователя
+      tags:
+      - Личный кабинет
+    put:
+      consumes:
+      - application/json
+      description: Обновление данных профиля текущего авторизованного пользователя
+      parameters:
+      - description: Данные для обновления
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённый профиль
+          schema:
+            $ref: '#/definitions/model.UserProfileResponse'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "401":
+          description: Не авторизован
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление профиля пользователя
+      tags:
+      - Личный кабинет
+  /api/user/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрация нового пользователя в системе медицинской организации
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UserRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Токен авторизации
+          schema:
+            $ref: '#/definitions/model.TokenResponse'
+        "400":
+          description: Ошибка валидации
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "409":
+          description: Пользователь уже существует
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/helper.ErrorResponse'
+      summary: Регистрация нового пользователя
+      tags:
+      - Пользователь
 swagger: "2.0"
