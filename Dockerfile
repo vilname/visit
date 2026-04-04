@@ -22,3 +22,25 @@ RUN which dlv && dlv version
 EXPOSE 8081 2345
 
 CMD dlv debug --headless --listen=:2345 --api-version=2 --accept-multiclient --continue ./main.go
+
+# ========== ДОБАВЛЯЕМ СТАДИЮ ДЛЯ ТЕСТОВ ==========
+FROM golang:1.24-alpine AS test
+
+WORKDIR /app
+
+# Устанавливаем необходимые утилиты для тестов
+RUN apk add --no-cache git make curl
+
+# Копируем go.mod и go.sum для кэширования зависимостей
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Копируем исходный код
+COPY . .
+
+# Устанавливаем инструменты для генерации отчетов о тестах (опционально)
+RUN go install github.com/jstemmer/go-junit-report@latest
+
+# Команда для запуска тестов
+# Можно переопределить в docker-compose при необходимости
+CMD ["go", "test", "-v", "-cover", "./..."]

@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 // InitMigrationDB создание подключение к базе для миграции
@@ -29,10 +30,19 @@ func InitMigrationDB() {
 		return
 	}
 
-	driver, _ := postgres.WithInstance(dbSQL, &postgres.Config{})
-	m, _ := migrate.NewWithDatabaseInstance(
+	driver, err := postgres.WithInstance(dbSQL, &postgres.Config{})
+
+	if err != nil {
+		return
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
 		"file://migration",
 		"postgres", driver)
+
+	if err != nil {
+		return
+	}
 
 	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		_ = fmt.Errorf("error when migration up: %v", err)

@@ -19,7 +19,15 @@ func main() {
 		return
 	}
 
-	storage.InitDB()
+	dbUrl := os.Getenv("DATABASE_URL")
+
+	err = storage.InitDB(dbUrl)
+
+	if err != nil {
+		fmt.Println("main: " + err.Error())
+		return
+	}
+
 	router := config.InitRoute()
 
 	defer func() {

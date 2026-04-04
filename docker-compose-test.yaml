@@ -17,9 +17,10 @@ services:
       - test_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-visit_test}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
 
   app-test:
     build:
@@ -52,6 +53,9 @@ services:
       - sh
       - -c
       - |
+        echo "Waiting for database to be fully ready..."
+        sleep 5
+        echo "Running tests..."
         go test -v -cover -coverprofile=/app/test-reports/coverage.out ./...
     restart: "no"  # Тесты не нужно перезапускать
     security_opt:
@@ -123,7 +127,14 @@ services:
         condition: service_healthy
     networks:
       - test_network
-    command: ["go", "test", "-v", "./..."]
+    command:
+      - sh
+      - -c
+      - |
+        echo "Running migrations..."
+        go run cmd/migration.go
+        echo "Migrations completed. Running tests..."
+        go test -v -cover ./src/service/...
     restart: "no"
     security_opt:
       - "seccomp:unconfined"
