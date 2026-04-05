@@ -2,16 +2,69 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
+	"unicode"
+	"visit/dbmigrate"
 	"visit/src/model"
 	"visit/test/fixtures"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
+
+func ensureTestDatabase(ctx context.Context, dbURL string) error {
+	if dbURL == "" {
+		return fmt.Errorf("DATABASE_URL_TEST is empty")
+	}
+	u, err := url.Parse(dbURL)
+	if err != nil {
+		return err
+	}
+	dbName := strings.TrimPrefix(u.Path, "/")
+	if dbName == "" {
+		return fmt.Errorf("database name missing in DATABASE_URL_TEST")
+	}
+	for _, r := range dbName {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
+			return fmt.Errorf("invalid database name in URL")
+		}
+	}
+	u.Path = "/postgres"
+	adminURL := u.String()
+
+	conn, err := pgx.Connect(ctx, adminURL)
+	if err != nil {
+		return fmt.Errorf("connect to postgres maintenance db: %w", err)
+	}
+	defer conn.Close(ctx)
+
+	var exists bool
+	err = conn.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`, dbName).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+	_, err = conn.Exec(ctx, fmt.Sprintf("CREATE DATABASE %q", dbName))
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			// Параллельные пакеты go test могут создать БД одновременно.
+			return nil
+		}
+		return err
+	}
+	return nil
+}
 
 // SetupTestDB - настройка тестовой базы данных
 func SetupTestDB(t *testing.T) *pgxpool.Pool {
@@ -33,6 +86,15 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	dbUrl := os.Getenv("DATABASE_URL_TEST")
 
 	fmt.Println("DATABASE_URL_TEST: " + dbUrl)
+
+	ctxEnsure, cancelEnsure := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelEnsure()
+	if err := ensureTestDatabase(ctxEnsure, dbUrl); err != nil {
+		t.Fatalf("ensure test database: %v", err)
+	}
+	if err := dbmigrate.Up(); err != nil {
+		t.Fatalf("test migrations: %v", err)
+	}
 
 	for i := 0; i < 10; i++ {
 		err = InitDB(dbUrl)

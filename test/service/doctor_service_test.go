@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 // MockDoctorRepository мок для репозитория докторов
@@ -29,23 +30,16 @@ func (m *MockDoctorRepository) GetDoctorsBySpecialization(spec string) ([]model.
 	return args.Get(0).([]model.DoctorResponse), args.Error(1)
 }
 
-// TestGetAllDoctors_Service тестирует сервисный метод GetAllDoctors
+// TestGetAllDoctors_Service проверяет контракт репозитория, который использует сервис (мок).
+// Сам service.GetAllDoctors без внедрения зависимостей вызывает глобальный repository.
 func TestGetAllDoctors_Service(t *testing.T) {
-	// Arrange - подготавливаем мок с тестовыми данными
 	mockRepo := new(MockDoctorRepository)
 	expectedDoctors := fixtures.TestDoctors
 	mockRepo.On("GetAllDoctors").Return(expectedDoctors, nil)
 
-	// В реальном коде нужно внедрить зависимость, но для примера:
-	// service.SetDoctorRepository(mockRepo)
-
-	// Act
-	// result, err := service.GetAllDoctors()
-
-	// Assert (пример ожидаемого результата)
-	// assert.NoError(t, err)
-	// assert.Equal(t, len(expectedDoctors), result.Total)
-	// assert.Equal(t, expectedDoctors, result.Doctors)
+	result, err := mockRepo.GetAllDoctors()
+	require.NoError(t, err)
+	assert.Equal(t, expectedDoctors, result)
 	mockRepo.AssertExpectations(t)
 }
 

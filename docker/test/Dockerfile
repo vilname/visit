@@ -18,10 +18,3 @@ RUN go install github.com/jstemmer/go-junit-report@v1.0.0
 
 # Создаем директорию для отчетов
 RUN mkdir -p /app/test-reports
-
-# Точка входа для тестов - используем cmd/test.go
-# Аргументы можно передавать через docker-compose
-ENTRYPOINT ["go", "run", "cmd/test.go"]
-
-# Дефолтная команда (запуск всех тестов)
-CMD ["-pkg=./...", "-v=true", "-cover=true"]

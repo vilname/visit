@@ -59,6 +59,10 @@ services:
       - SYS_PTRACE
     stdin_open: true
     tty: true
+    command: >
+      sh -c "
+        go test ./... -count=1 -v
+      "
 
 volumes:
   postgres_test_data:

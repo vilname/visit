@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"visit/config"
 
 	"github.com/joho/godotenv"
@@ -15,7 +16,9 @@ func main() {
 		fmt.Println("env: ", err.Error())
 	}
 
-	config.InitMigrationDB()
+	if err := config.InitMigrationDB(); err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Println("миграции отработали")
 }
