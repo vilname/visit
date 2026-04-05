@@ -4,148 +4,66 @@ services:
   postgres-test:
     image: postgres:16-alpine
     container_name: postgres_test
+    env_file:
+      - .env.test
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-12345}
       POSTGRES_DB: ${DB_NAME:-visit_test}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     ports:
-      - "5433:5432"  # Используем другой порт, чтобы не конфликтовать с основным
+      - "5433:5432"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
+    #      - ./init-db:/docker-entrypoint-initdb.d
     networks:
-      - test_network
+      - app_network_test
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-visit_test}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 10s
+      retries: 5
 
   app-test:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: test  # или development, в зависимости от вашего Dockerfile
+      dockerfile: docker/test/Dockerfile
+      target: test
     container_name: go_app_test
+    env_file:
+      - .env.test
     environment:
-      DB_HOST: postgres-test
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-localhost}
+      DB_PORT: ${DB_PORT:-5433}
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-12345}
       DB_NAME: ${DB_NAME:-visit_test}
       DB_SSL_MODE: disable
-      APP_ENV: test
-      LOG_LEVEL: ${LOG_LEVEL:-error}  # Для тестов обычно уровень ошибок
-      GO_ENV: test
-    ports:
-      - "8082:8081"  # Другой порт для тестового приложения
-    volumes:
-      - ./:/app
-      - go_mod_cache:/go/pkg/mod
-      - test_reports:/app/test-reports  # Для сохранения отчетов о тестах
-    depends_on:
-      postgres-test:
-        condition: service_healthy
-    networks:
-      - test_network
-    command:
-      - sh
-      - -c
-      - |
-        echo "Waiting for database to be fully ready..."
-        sleep 5
-        echo "Running tests..."
-        go test -v -cover -coverprofile=/app/test-reports/coverage.out ./...
-    restart: "no"  # Тесты не нужно перезапускать
-    security_opt:
-      - "seccomp:unconfined"
-    cap_add:
-      - SYS_PTRACE
-
-  # Опционально: сервис для запуска тестов с дополнительными опциями
-  app-test-watch:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: go_app_test_watch
-    environment:
-      DB_HOST: postgres-test
-      DB_PORT: 5432
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-12345}
-      DB_NAME: ${DB_NAME:-visit_test}
-      DB_SSL_MODE: disable
-      APP_ENV: test
+      APP_ENV: ${APP_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
     ports:
-      - "8083:8081"
+      - "8082:8082"
+      - "2345:2345"
     volumes:
       - ./:/app
       - go_mod_cache:/go/pkg/mod
-      - test_reports:/app/test-reports
     depends_on:
       postgres-test:
         condition: service_healthy
     networks:
-      - test_network
-    command:
-      - sh
-      - -c
-      - |
-        go test -v -cover -coverprofile=/app/test-reports/coverage.out -covermode=atomic ./... && \
-        go tool cover -html=/app/test-reports/coverage.out -o /app/test-reports/coverage.html
-    restart: "no"
+      - app_network_test
+    restart: unless-stopped
     security_opt:
-      - "seccomp:unconfined"
+      - "seccomp:unconfined"  # Необходимо для delve
     cap_add:
       - SYS_PTRACE
-
-  # Сервис для запуска отдельных тестов с аргументами
-  app-test-runner:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: go_app_test_runner
-    environment:
-      DB_HOST: postgres-test
-      DB_PORT: 5432
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-12345}
-      DB_NAME: ${DB_NAME:-visit_test}
-      DB_SSL_MODE: disable
-      APP_ENV: test
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-    volumes:
-      - ./:/app
-      - go_mod_cache:/go/pkg/mod
-      - test_reports:/app/test-reports
-    depends_on:
-      postgres-test:
-        condition: service_healthy
-    networks:
-      - test_network
-    command:
-      - sh
-      - -c
-      - |
-        echo "Running migrations..."
-        go run cmd/migration.go
-        echo "Migrations completed. Running tests..."
-        go test -v -cover ./src/service/...
-    restart: "no"
-    security_opt:
-      - "seccomp:unconfined"
-    cap_add:
-      - SYS_PTRACE
+    stdin_open: true
+    tty: true
 
 volumes:
   postgres_test_data:
   go_mod_cache:
-  test_reports:
 
 networks:
-  test_network:
+  app_network_test:
     driver: bridge

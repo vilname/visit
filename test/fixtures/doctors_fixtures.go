@@ -68,3 +68,29 @@ func GetTestDoctorsBySpecialization(specialization string) []model.DoctorRespons
 	}
 	return result
 }
+
+// GenerateTestDoctor создаёт одного тестового доктора для изолированных тестов
+func GenerateTestDoctor(id, name, spec string, exp int, desc string) model.DoctorResponse {
+	return model.DoctorResponse{
+		ID:             id,
+		Name:           name,
+		Specialization: spec,
+		Experience:     exp,
+		Description:    desc,
+	}
+}
+
+// GenerateTestDoctorsList генерирует N тестовых докторов
+func GenerateTestDoctorsList(n int) []model.DoctorResponse {
+	doctors := make([]model.DoctorResponse, n)
+	for i := 0; i < n; i++ {
+		doctors[i] = GenerateTestDoctor(
+			string(rune('A'+i)),
+			"Test Doctor",
+			"General",
+			5,
+			"Test description",
+		)
+	}
+	return doctors
+}

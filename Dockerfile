@@ -39,7 +39,7 @@ RUN go mod download
 COPY . .
 
 # Устанавливаем инструменты для генерации отчетов о тестах (опционально)
-RUN go install github.com/jstemmer/go-junit-report@latest
+RUN go install github.com/jstemmer/go-junit-report@v1.0.0
 
 # Команда для запуска тестов
 # Можно переопределить в docker-compose при необходимости

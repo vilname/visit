@@ -21,8 +21,12 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 	var db *pgxpool.Pool
 	var err error
 
-	err = godotenv.Load(".env.test")
-	if err != nil {
+	//err = godotenv.Load(".env.test")
+	//if err != nil {
+	//	t.Fatalf("Failed load enf file: %v", err)
+	//}
+
+	if err := godotenv.Load("../../.env.test"); err != nil {
 		t.Fatalf("Failed load enf file: %v", err)
 	}
 
